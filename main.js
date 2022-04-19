@@ -1,4 +1,6 @@
 
+const format = Intl.NumberFormat().format;
+
 function roundTo(n, digits) {
     if (digits === undefined) {
         digits = 0;
@@ -42,7 +44,15 @@ window.onresize = () => {
 }
 
 const endpoint = "wss://portfolio-backend.io.srg.id.au/ws";
-const socket = new WebSocket(endpoint);
+let socket;
+
+if (!localStorage.getItem("no-interaction")) {
+    socket = new WebSocket(endpoint);
+} else {
+    document.getElementById("br-message").innerHTML =
+        "Interactivity disabled. <a href='/' onclick='localStorage.clearItem(`no-interactivity`);'>Re-enable?</a>";
+    document.getElementById("canvas-overlay").remove();
+}
 
 socket.onerror = function (error) {
     console.error(error);
@@ -74,14 +84,9 @@ let events = 0;
 let registeredClients = {};
 let myPreviousPosition;
 
-let acl = new Accelerometer({frequency: 60});
-acl.addEventListener('reading', () => {
-  console.log("Acceleration along the X-axis " + acl.x);
-  console.log("Acceleration along the Y-axis " + acl.y);
-  console.log("Acceleration along the Z-axis " + acl.z);
-});
+let totalMessagesReceived = 0;
 
-acl.start();
+const people = () => Object.keys(registeredClients).length + 1;
 
 document.body.onmousemove = (e) => {
     events++;
@@ -92,10 +97,12 @@ document.body.onmousemove = (e) => {
     if (socket.readyState === 1 && events % sendEvery === 0) {
         socket.send(
             JSON.stringify({
-                x, y,
-                clientId: clientId,
+                x: x,
+                y: y,
+                cid: clientId,
                 type: "mousemove",
-                mouseDown: mouseDown,
+                md: mouseDown,
+                t: Date.now(),
             })
         );
     }
@@ -127,9 +134,10 @@ document.body.onmousedown = (e) => {
             JSON.stringify({
                 x: x,
                 y: y,
-                clientId: clientId,
+                cid: clientId,
                 type: "mousedown",
-                mouseDown: mouseDown,
+                md: mouseDown,
+                t: Date.now(),
             })
         );
     }
@@ -146,53 +154,61 @@ document.body.onmouseup = (e) => {
             JSON.stringify({
                 x: x,
                 y: y,
-                clientId: clientId,
+                cid: clientId,
                 type: "mouseup",
-                mouseDown: mouseDown,
+                md: mouseDown,
+                t: Date.now()
             })
         );
     }
 };
 
 socket.onmessage = ({ data }) => {
+
+    totalMessagesReceived++;
+    document.getElementById("recieved-count").innerText = format(totalMessagesReceived);
+
     try {
         data = JSON.parse(data);
     } catch (e) {
         data = JSON.parse(data.split("\n")[0]);
     }
 
-    if (data.clientId === clientId) {
+    console.log(Date.now(), data.t)
+    document.getElementById("ping").innerText = format(Date.now() - data.t);
+
+    if (data.cid === clientId) {
         return;
     }
 
-    if (!(data.clientId in registeredClients)) {
-        registeredClients[data.clientId] = {};
+    if (!(data.cid in registeredClients)) {
+        registeredClients[data.cid] = {};
 
         const cursor = document.createElement("img");
         cursor.src = "/cursor.png";
         cursor.classList.add("cursor");
-        cursor.id = data.clientId;
+        cursor.id = data.cid;
 
         document.getElementById("cursors-overlay").appendChild(cursor);
     }
 
     document.getElementById("number-of-cursors").innerText =
-        Object.keys(registeredClients).length +
+        people() +
         " " +
-        (Object.keys(registeredClients).length === 1 ? "person" : "people");
+        (people() === 1 ? "person" : "people");
 
-    const cursor = document.getElementById(data.clientId);
+    const cursor = document.getElementById(data.cid);
     cursor.style.left = data.x * window.innerWidth + "px";
     cursor.style.top = data.y * window.innerHeight + "px";
 
     // Draw a line from the previous position to the new position
     // ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.beginPath();
-    ctx.strokeStyle = data.mouseDown ? drawing_colors.darker : drawing_colors.lighter;
+    ctx.strokeStyle = data.md ? drawing_colors.darker : drawing_colors.lighter;
     ctx.moveTo(
-        (registeredClients[data.clientId]?.lastPosition?.x || data.x) *
+        (registeredClients[data.cid]?.lastPosition?.x || data.x) *
             window.innerWidth,
-        (registeredClients[data.clientId]?.lastPosition?.y || data.y) *
+        (registeredClients[data.cid]?.lastPosition?.y || data.y) *
             window.innerHeight
     );
     ctx.lineTo(data.x * window.innerWidth, data.y * window.innerHeight);
@@ -210,14 +226,14 @@ socket.onmessage = ({ data }) => {
             break;
     }
 
-    registeredClients[data.clientId].time = Date.now();
-    registeredClients[data.clientId].lastPosition = {
+    registeredClients[data.cid].time = Date.now();
+    registeredClients[data.cid].lastPosition = {
         x: data.x,
         y: data.y,
     };
 };
 
-setInterval(() => {
+const removeInactiveClients = setInterval(() => {
     for (let clientId in registeredClients) {
         if (Date.now() - registeredClients[clientId].time > 5000) {
             document.getElementById(clientId).remove();
@@ -226,7 +242,34 @@ setInterval(() => {
     }
 
     document.getElementById("number-of-cursors").innerText =
-        Object.keys(registeredClients).length +
+        people() +
         " " +
-        (Object.keys(registeredClients).length === 1 ? "person" : "people");
+        (people() === 1 ? "person" : "people");
 }, 500);
+
+localStorage.getItem("no-interaction") && clearInterval(removeInactiveClients);
+
+// If control + c is pressed, clear the canvas and disconnect from the server
+document.body.onkeydown = (e) => {
+    console.log(e)
+    if (e.shiftKey && e.key == "Escape") {
+        if (document.getElementById("canvas-overlay")) {
+            socket.close();
+            document.getElementById("canvas-overlay").remove();
+            clearInterval(removeInactiveClients);
+        } else {
+            localStorage.setItem("no-interaction", true);
+        }
+        e.preventDefault();
+    }
+}
+
+document.querySelectorAll("a").forEach(e => {
+
+    if (e.href && e.href != "#") {
+
+        e.outerHTML = `${e.outerHTML}<span class="location"> (${e.href})</span>`;
+
+    }
+
+})

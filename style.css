@@ -17,6 +17,10 @@ body {
 }
 
 li {
+    margin: 8px 0;
+}
+
+ul.sep-more li {
     margin: 15px 0;
 }
 
@@ -25,7 +29,7 @@ div.main {
 }
 
 h1, a {
-    color: #A3F7B5;
+    color: #FF6978;
 }
 
 div.overlay {
@@ -51,6 +55,13 @@ div#cursors-overlay b {
 
     right: 0;
     bottom: 0;
+
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+div#cursors-overlay b:hover {
+    opacity: 1;
 }
 
 div#cursors-overlay img {
@@ -73,5 +84,27 @@ div#cursors-overlay img.down {
     body {
         background-color: #303036;
         color: #fafafa;
+    }
+
+    h1, a {
+        color: #A3F7B5;
+    }
+}
+
+span.location {
+    display: none;
+}
+
+@media print {
+    .overlay {
+        display: none;
+    }
+
+    div.main {
+        max-width: 100%;
+    }
+
+    span.location {
+        display: inline;
     }
 }
