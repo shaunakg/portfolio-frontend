@@ -1,0 +1,258 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<head>
+    <title>Superpowered reading lists in Notion | sg</title>
+    <meta name="description" content="Fetch all of the relevant metadata in seconds so you can focus on what matters most.">
+
+    <style>
+        div.widget span {
+            font-weight: bold;
+        }
+
+        img, video {
+            max-width: -webkit-fill-available;
+        }
+
+        /* @media (max-width: 600px) {
+            img, video {
+                max-width: 100vw;
+            }
+        } */
+
+        *:target {
+            text-decoration: underline;
+            text-decoration-color: hotpink;
+        }
+
+        p#returning {
+            display: none;
+            color: hotpink;
+            padding: 1.5em;
+            border: 2px solid #EEE;
+            border-radius: 5px;
+        }
+
+    </style>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NSSWDCFCBG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-NSSWDCFCBG');
+    </script>
+</head>
+
+<script src="https://distill.pub/template.v1.js"></script>
+
+<script type="text/front-matter">
+    title: "Superpowered reading lists in Notion"
+    description: "Fetch all of the relevant metadata in seconds so you can focus on what matters most - reading."
+    authors:
+    - Shaunak G: https://github.com/shaunakg
+</script>
+
+<dt-article>
+
+    <h1>🚀 Superpowered reading lists in Notion</h1>
+    <h2>Fetch all of the relevant metadata in seconds so you can focus on what matters most.</h2>
+
+    <dt-byline></dt-byline>
+
+    <hr>
+
+    <p class="l-middle-outset" id="returning">
+        It looks like you've used this guide before. We've pre-populated the input field with your previous entry.
+        <a href="#bk">Click here</a> to skip to the interactive part of this guide. 
+        Or, <a href="#" id="clearLocalStorage">click here</a> to erase stored settings.
+    </p>
+
+    <p>
+        Notion is one of the best places for organizing and storing your data. But when it comes to actually
+        collecting that data, some areas of the product are lacking. In this article, you'll learn how to
+        host your own autofiller for your Notion reading lists. Here's a preview of the final product.
+    </p>
+
+    <video class="l-middle-outset" style="border-radius: 10px; border: 2px solid #EEE;" src="preview.mp4" autoplay muted></video>
+
+    <h2>Part I: Setting up your database</h2>
+
+    <p>
+        First, you'll need to duplicate 
+        <a href="https://s-g.notion.site/9690f5bcceed4256af97ebad34c80b9e?v=cefe176229194c5b8eb9860f39c1f490" target="_blank">this</a> 
+        database template to your own Notion. This is done via the 'Duplicate' button in the top right.
+    </p>
+
+    <p>
+        Once you're done, make a note of the <b>database ID</b>. It's the 32 character random string that comes after <code>https://www.notion.so/&lt;username&gt;/</code> in the URL.
+    </p>
+
+    <p>You can also change styles and add new properties to your liking.</p>
+
+    <p>
+        <b>⚠️ Important</b> - Please do not alter the following properties: "Title", "Description", "Author(s)", "Rating", "Genre(s)", "Link" and "Pages".
+        The program uses these to identify the columns in which data should be inserted. Don't change the name of the properties
+        nor their type.
+    </p>
+
+    <h2>Part II: Creating a Notion integration</h2>
+
+    <p>
+        Navigate to <a href="https://www.notion.so/my-integrations" target="_blank">https://www.notion.so/my-integrations</a> and click on the 'New integration' button.
+    </p>
+
+    <p>
+        Fill in whatever identifying information you like, then submit the form. <b>Copy the 'Internal Integration Token' that's
+        on this page.</b>
+    </p>
+
+    <p>
+        Go back to the database you created and share it with your new integration. It should look like the below image, where
+        'Notion Reading List Helper' is whatever you named your integration in the form above.
+    </p>
+
+    <img alt="Notion sharing dialog" src="integ-share.png" style="border-radius: 3px; border: 1px solid #EEE;" class="l-body">
+
+    <h2>Part III: Setting up the web server</h2>
+
+    <p>
+        We're going to use <a href="https://replit.com">Repl.it</a> to host our web server. You'll need to create an account if you 
+        don't have one already - but it's free and lasts forever.
+    </p>
+
+    <p>
+        Head over to the <a id="repl-link" href="https://replit.com/github/shaunakg/notion-reading-list" target="_blank">Repl.it page</a> for the reading list.
+        Then, if needed, sign up or log in the Replit. You should eventually arrive at a page like the below.
+    </p>
+
+    <img alt="Repl.it workspace" src="replit.png" style="border-radius: 3px; border: 1px solid #EEE;" class="l-body">
+
+    <p>
+        We're almost done - we just need to fill in a few things. Click the lock on the menu at the left to navigate to the 'Secrets' view.
+    </p>
+
+    <p>
+        Secret 1: For the key, type in <code>DATABASE_ID</code>. For the secret, paste in the database ID you took a note of earlier. Then, press 'Add new secret'.
+    </p>
+
+    <p>
+        Secret 2: For the key, type in <code>NOTION_API_KEY</code>. For the secret, paste in the Internal Integration Token you took a note of earlier. Then, press 'Add new secret'.
+    </p>
+
+    <p>
+        Press the green 'Run' button at the top and wait 30 seconds for a white window to pop up with a URL and some text. Copy that URL, it should look like <code>https://notion-reading-list.username.repl.co/</code>.
+    </p>
+
+    <p>
+        <b>Paste the URL below in the input box and click 'Go'.</b> While this page and the Repl.it is open, we will query your database every 5 seconds. Also, it'll be saved in your browser's local storage. 
+    </p>
+
+    <h2 id="bk">Part IV: Activating the program</h2>
+
+    <p>
+        Once you paste in the server URL and press 'Go', any page you create in the database that <b>ends with a semicolon</b> will have metadata fetched for it.
+    </p>
+
+    <div class="l-middle-outset widget">
+            
+        <div id="inputs">
+            <input type="text" id="url" placeholder="https://notion-reading-list.username.repl.co/" style="width: 100%; padding: 10px; border-radius: 3px; border: 2px solid #EEE; font-size: 1em;">
+            <button id="go" style="padding: 10px; border-radius: 3px; border: 1px solid #EEE; background-color: white; margin-top: 10px; cursor: pointer;">Go</button>
+        </div>
+
+        <div id="results" style="display: none;">
+            <p>
+                Your database has been checked <span id="check-n">0</span> times so far (got <span id="error-n">0</span> errors). Updated pages were:
+            </p>
+            <ol id="check-list"></ol>
+        </div>
+
+    </div>
+
+    <hr>
+
+    <h2>🌟 Bonus section: Automating this process, forever</h2>
+
+    <p>
+        You can use an external service to ping your server every minute or so in order to keep it up to date.
+        In this section, we'll guide you on how to do just that.
+    </p>
+
+    <p>
+        First, you'll need to create an account on <a href="https://console.cron-job.org/jobs/create">cron-job.org</a>. Once you've done that, you'll see a console.
+        Click 'Create cronjob' on the right of the page.
+    </p>
+
+    <p>
+        You can name the job whatever you'd like. For the URL, type in <code id="cronurl">https://[YOUR REPLIT SERVER URL]/fetch</code>.
+        That is, the server URL that you'd paste in the input box above, appended with <code>/fetch</code>.
+    </p>
+
+    <p>
+        Set the frequency to every 1 minute, then, click 'Create'.
+    </p>
+
+    <p>
+        All done! You can check if it works by using your reading list normally and checking if it updates.
+    </p>
+
+</dt-article>
+
+<script>
+
+    document.getElementById("url").value = localStorage.getItem("readinglist-url") || "";
+
+    document.getElementById("clearLocalStorage").onclick = function() {
+        localStorage.clear();
+        location.reload();
+    }
+
+    if (localStorage.getItem("readinglist-url")) {
+        document.getElementById("repl-link").href = localStorage.getItem("readinglist-url") + "/__repl";
+        document.getElementById("returning").style.display = "block";
+        document.getElementById("cronurl").innerHTML = localStorage.getItem("readinglist-url") + "/fetch";
+    }
+
+    document.getElementById("go").onclick = () => {
+
+        document.getElementById("inputs").style.display = "none";
+        document.getElementById("results").style.display = "block";
+        document.getElementById("bk").innerText = "⭐️ Currently running!"
+
+        const checklist = document.getElementById("check-list");
+        const checkN = document.getElementById("check-n");
+        const errorN = document.getElementById("error-n");
+
+        const url = document.getElementById("url").value;
+        localStorage.setItem("readinglist-url", url);
+
+        check_n = 0;
+        error_n = 0;
+
+        setInterval(async () => {
+
+
+            try {
+                const response = await fetch(url + "/fetch").then(r => r.json());
+                check_n++;
+
+                for (const item of response) {
+                    const li = document.createElement("li");
+                    li.innerText = item;
+                    checklist.appendChild(li);
+                }
+            } catch (e) {
+                error_n++;
+            }
+
+            checkN.innerText = check_n;
+            errorN.innerText = error_n;
+
+        }, 5000);
+
+    }
+
+</script>
