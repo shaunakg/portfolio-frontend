@@ -18,15 +18,15 @@ function isTouchDevice() {
 }  
 
 let drawing_colors = {
-    lighter: "#D3D3D3",
-    darker: "#808080"
+    lighter: "#D3D3D3", // shown on mouse movement
+    darker: "#808080" // shown on click-and-drag
 }
 
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     // dark mode
     document.body.classList.add("dark");
     drawing_colors = {
-        lighter: "#007a7a", //C0E8F9
+        lighter: "#007a7a",
         darker: "#EEEBD0"
     }
 }
@@ -38,10 +38,11 @@ let mouseDown = false;
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-window.onresize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
+// Causes issues on mobile devices where the window can be resized very quickly
+// window.onresize = () => {
+//     canvas.width = window.innerWidth;
+//     canvas.height = window.innerHeight;
+// }
 
 const endpoint = "wss://portfolio-backend.io.srg.id.au/ws";
 let socket;
@@ -49,8 +50,9 @@ let socket;
 if (!localStorage.getItem("no-interaction")) {
     socket = new WebSocket(endpoint);
 } else {
+    socket = {};
     document.getElementById("br-message").innerHTML =
-        "Interactivity disabled. <a href='/' onclick='localStorage.clearItem(`no-interactivity`);'>Re-enable?</a>";
+        "Interactivity disabled. <a href='#' onclick='localStorage.removeItem(`no-interaction`);location.reload()'>Re-enable?</a>";
     document.getElementById("canvas-overlay").remove();
 }
 
@@ -73,7 +75,10 @@ socket.onclose = function (event) {
 //
 // Decreasing this number will make the transition smoother, but will
 // also increase the amount of messages sent to the server.
-const sendEvery = 1;
+const sendEvery = {
+    "draw": 1, // When click-and-dragging, send every event
+    "move": 2 // When moving the mouse, send every other event. Reduces load, but might make lines more "blocky"
+}
 
 // Unique identifier for the user
 // Changes every time the user refreshes the page
@@ -82,11 +87,11 @@ const clientId = "client-" + btoa(Math.random() * 1e5).replace(/=/g, "");
 // Keep track of the number of clients and sent events.
 let events = 0;
 let registeredClients = {};
-let myPreviousPosition;
+// let myPreviousPosition;
 
 let totalMessagesReceived = 0;
 
-const people = () => Object.keys(registeredClients).length + 1;
+const people = () => Object.keys(registeredClients).length;
 
 document.body.onmousemove = (e) => {
     events++;
@@ -94,7 +99,7 @@ document.body.onmousemove = (e) => {
     let x = e.clientX / window.innerWidth;
     let y = e.clientY / window.innerHeight;
 
-    if (socket.readyState === 1 && events % sendEvery === 0) {
+    if (socket.readyState === 1 && events % sendEvery[mouseDown ? "draw":"move"]  === 0) {
         socket.send(
             JSON.stringify({
                 x: x,
@@ -106,21 +111,6 @@ document.body.onmousemove = (e) => {
             })
         );
     }
-
-    // Draw a line from the previous position to the new position
-    // ctx.fillStyle = "rgba(0, 0, 0, 1)";
-    ctx.beginPath();
-    ctx.strokeStyle = mouseDown ? drawing_colors.darker : drawing_colors.lighter;
-    ctx.moveTo(
-        (myPreviousPosition?.x || x) *
-            window.innerWidth,
-        (myPreviousPosition?.y || y) *
-            window.innerHeight
-    );
-    ctx.lineTo(x * window.innerWidth, y * window.innerHeight);
-    ctx.stroke();
-
-    myPreviousPosition = {x, y};
 };
 
 document.body.onmousedown = (e) => {
@@ -174,12 +164,25 @@ socket.onmessage = ({ data }) => {
         data = JSON.parse(data.split("\n")[0]);
     }
 
-    console.log(Date.now(), data.t)
-    document.getElementById("ping").innerText = format(Date.now() - data.t);
+    let txtime = Date.now() - data.t;
 
-    if (data.cid === clientId) {
-        return;
+    if (txtime > 500) {
+
+        if (data.cid === clientId) {
+            console.debug(`[WARN] Round-trip packet from self->server->self took ${txtime}ms (may indicate network latency).`);
+        } else {
+            console.debug(`[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (Severe UX impact)`);
+        }
+
+    } else if (txtime > 100) {
+        if (data.cid === clientId) {
+            console.debug(`[WARN] Round-trip packet from self->server->self took ${txtime}ms (severe network latency).`);
+        } else {
+            console.debug(`[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (>100ms for delayed response)`);
+        }
     }
+
+    document.getElementById("ping").innerText = format(txtime);
 
     if (!(data.cid in registeredClients)) {
         registeredClients[data.cid] = {};
@@ -200,6 +203,10 @@ socket.onmessage = ({ data }) => {
     const cursor = document.getElementById(data.cid);
     cursor.style.left = data.x * window.innerWidth + "px";
     cursor.style.top = data.y * window.innerHeight + "px";
+
+    if (data.cid === clientId) {
+        cursor.style.display = "none";
+    }
 
     // Draw a line from the previous position to the new position
     // ctx.fillStyle = "rgba(0, 0, 0, 1)";
