@@ -28,7 +28,7 @@ div.main {
     max-width: 500px;
 }
 
-h1, a {
+h1, a, #br-message {
     color: #FF6978;
 }
 
@@ -86,7 +86,7 @@ div#cursors-overlay img.down {
         color: #fafafa;
     }
 
-    h1, a {
+    h1, a, #br-message {
         color: #A3F7B5;
     }
 }

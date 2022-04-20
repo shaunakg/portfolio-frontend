@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>srg</title>
+        <title>srg | software developer</title>
 
         <link rel="stylesheet" href="/style.css" />
     </head>
@@ -108,17 +108,19 @@
                 Your mouse movements are not saved. This site uses Google Analytics for tracking. <span id="recieved-count">0</span> packets have been sent or recieved by the server, and the last one had a transmit time of <span id="ping">0</span> milliseconds.
             </p>
 
-        </div>
-
-        <div class="overlay" id="canvas-overlay">
-            <canvas id="canvas" width="500" height="500"></canvas>
-        </div>
-        
-        <div class="overlay" id="cursors-overlay">
             <b id="br-message">
                 <span id="number-of-cursors">0 people</span> here right now.
             </b>
+
         </div>
+
+        <div class="overlay" id="canvas-overlay" style="z-index: -2;">
+            <canvas id="canvas" width="500" height="500"></canvas>
+        </div>
+        
+        <div class="overlay" id="cursors-overlay" style="z-index: -1;"></div>
+
+        
 
         <script src="/main.js"></script>
     </body>
