@@ -1,5 +1,9 @@
-
 const format = Intl.NumberFormat().format;
+
+const noc = (document.getElementById("number-of-cursors") || {});
+const br_message = (document.getElementById("br-message") || {});
+const ping = (document.getElementById("ping") || {});
+const recieved_count = (document.getElementById("recieved-count") || {});
 
 function roundTo(n, digits) {
     if (digits === undefined) {
@@ -12,23 +16,28 @@ function roundTo(n, digits) {
 }
 
 function isTouchDevice() {
-    return (('ontouchstart' in window) ||
-       (navigator.maxTouchPoints > 0) ||
-       (navigator.msMaxTouchPoints > 0));
-}  
+    return (
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
+}
 
 let drawing_colors = {
     lighter: "#D3D3D3", // shown on mouse movement
-    darker: "#808080" // shown on click-and-drag
-}
+    darker: "#808080", // shown on click-and-drag
+};
 
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+) {
     // dark mode
     document.body.classList.add("dark");
     drawing_colors = {
         lighter: "#007a7a",
-        darker: "#EEEBD0"
-    }
+        darker: "#EEEBD0",
+    };
 }
 
 const canvas = document.getElementById("canvas");
@@ -51,20 +60,20 @@ if (!localStorage.getItem("no-interaction")) {
     socket = new WebSocket(endpoint);
 } else {
     socket = {};
-    document.getElementById("br-message").innerHTML =
+    br_message.innerHTML =
         "Interactivity disabled. <a href='#' onclick='localStorage.removeItem(`no-interaction`);location.reload()'>Re-enable?</a>";
     document.getElementById("canvas-overlay").remove();
 }
 
 socket.onerror = function (error) {
     console.error(error);
-    document.getElementById("br-message").innerHTML =
+    br_message.innerHTML =
         "Websocket failed to connect. <a href='/'>Retry?</a>";
 };
 
 socket.onclose = function (event) {
     console.log("WebSocket closed");
-    document.getElementById("br-message").innerHTML =
+    br_message.innerHTML =
         "Websocket connection closed. <a href='/'>Re-open?</a>";
 };
 
@@ -76,9 +85,9 @@ socket.onclose = function (event) {
 // Decreasing this number will make the transition smoother, but will
 // also increase the amount of messages sent to the server.
 const sendEvery = {
-    "draw": 1, // When click-and-dragging, send every event
-    "move": 2 // When moving the mouse, send every other event. Reduces load, but might make lines more "blocky"
-}
+    draw: 1, // When click-and-dragging, send every event
+    move: 2, // When moving the mouse, send every other event. Reduces load, but might make lines more "blocky"
+};
 
 // Unique identifier for the user
 // Changes every time the user refreshes the page
@@ -99,7 +108,10 @@ document.body.onmousemove = (e) => {
     let x = e.clientX / window.innerWidth;
     let y = e.clientY / window.innerHeight;
 
-    if (socket.readyState === 1 && events % sendEvery[mouseDown ? "draw":"move"]  === 0) {
+    if (
+        socket.readyState === 1 &&
+        events % sendEvery[mouseDown ? "draw" : "move"] === 0
+    ) {
         socket.send(
             JSON.stringify({
                 x: x,
@@ -147,16 +159,17 @@ document.body.onmouseup = (e) => {
                 cid: clientId,
                 type: "mouseup",
                 md: mouseDown,
-                t: Date.now()
+                t: Date.now(),
             })
         );
     }
 };
 
 socket.onmessage = ({ data }) => {
-
     totalMessagesReceived++;
-    document.getElementById("recieved-count").innerText = format(totalMessagesReceived);
+    recieved_count.innerText = format(
+        totalMessagesReceived
+    );
 
     try {
         data = JSON.parse(data);
@@ -167,22 +180,28 @@ socket.onmessage = ({ data }) => {
     let txtime = Date.now() - data.t;
 
     if (txtime > 500) {
-
         if (data.cid === clientId) {
-            console.debug(`[WARN] Round-trip packet from self->server->self took ${txtime}ms (may indicate network latency).`);
+            console.debug(
+                `[WARN] Round-trip packet from self->server->self took ${txtime}ms (may indicate network latency).`
+            );
         } else {
-            console.debug(`[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (Severe UX impact)`);
+            console.debug(
+                `[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (Severe UX impact)`
+            );
         }
-
     } else if (txtime > 100) {
         if (data.cid === clientId) {
-            console.debug(`[WARN] Round-trip packet from self->server->self took ${txtime}ms (severe network latency).`);
+            console.debug(
+                `[WARN] Round-trip packet from self->server->self took ${txtime}ms (severe network latency).`
+            );
         } else {
-            console.debug(`[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (>100ms for delayed response)`);
+            console.debug(
+                `[WARN] Packet from ${data.cid} took ${txtime}ms to arrive. (>100ms for delayed response)`
+            );
         }
     }
 
-    document.getElementById("ping").innerText = format(txtime);
+    ping.innerText = format(txtime);
 
     if (!(data.cid in registeredClients)) {
         registeredClients[data.cid] = {};
@@ -195,10 +214,8 @@ socket.onmessage = ({ data }) => {
         document.getElementById("cursors-overlay").appendChild(cursor);
     }
 
-    document.getElementById("number-of-cursors").innerText =
-        people() +
-        " " +
-        (people() === 1 ? "person" : "people");
+    noc.innerText =
+        people() + " " + (people() === 1 ? "person" : "people");
 
     const cursor = document.getElementById(data.cid);
     cursor.style.left = data.x * window.innerWidth + "px";
@@ -248,17 +265,15 @@ const removeInactiveClients = setInterval(() => {
         }
     }
 
-    document.getElementById("number-of-cursors").innerText =
-        people() +
-        " " +
-        (people() === 1 ? "person" : "people");
+    noc.innerText =
+        people() + " " + (people() === 1 ? "person" : "people");
 }, 500);
 
 localStorage.getItem("no-interaction") && clearInterval(removeInactiveClients);
 
 // If control + c is pressed, clear the canvas and disconnect from the server
 document.body.onkeydown = (e) => {
-    console.log(e)
+    console.log(e);
     if (e.shiftKey && e.key == "Escape") {
         if (document.getElementById("canvas-overlay")) {
             socket.close();
@@ -269,14 +284,49 @@ document.body.onkeydown = (e) => {
         }
         e.preventDefault();
     }
+};
+
+document.querySelectorAll("a").forEach((e) => {
+    if (e.href && e.href != "#") {
+        e.outerHTML = `${e.outerHTML}<span class="location"> (${e.href})</span>`;
+    }
+});
+
+function slugify(text) {
+    return text
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, "-") // Replace spaces with -
+        .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+        .replace(/\-\-+/g, "-") // Replace multiple - with single -
+        .replace(/^-+/, "") // Trim - from start of text
+        .replace(/-+$/, ""); // Trim - from end of text
 }
 
-document.querySelectorAll("a").forEach(e => {
+if (document.getElementById("toc")) {
+    document.getElementById("toc").style.paddingInlineStart = "16px";
+    document.getElementById("toc").style.fontSize = "0.9em";
 
-    if (e.href && e.href != "#") {
+    document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((x, i) => {
 
-        e.outerHTML = `${e.outerHTML}<span class="location"> (${e.href})</span>`;
+        x.id = x.id || slugify(x.innerText);
+        let title = x.innerText;
+        let link = "#" + x.id;
 
-    }
+        let li = document.createElement("li");
+        li.innerText = title;
 
-})
+        let a = document.createElement("a");
+        a.innerText = " #";
+        a.href = link;
+        a.style.textDecoration = "none";
+
+        li.appendChild(a.cloneNode(true));
+        x.appendChild(a.cloneNode(true));
+
+        document.getElementById("toc").appendChild(li);
+
+        li.style.margin = "0 0";
+        li.style.marginLeft = ((parseInt(x.tagName[1]) - 1) * 15).toString() + "px";
+    });
+}

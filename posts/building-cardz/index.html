@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>srg | software developer</title>
+
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+        <div class="main">
+            <div class="nav">
+                <p>
+                    srg | <a href="#" onclick="history.back()">back</a> |
+                    <a href="/">home</a>
+                </p>
+            </div>
+
+            <h1>Building <a href="//cardz.tech">Cardz</a></h1>
+            <p class="sub">
+                <i
+                    >The flashcard app that uses machine learning to help you
+                    learn.</i
+                >
+            </p>
+
+            <ul id="toc"></ul>
+
+            <img class="block" src="deck.png" />
+
+            <p>
+                Cardz was an idea that was originally thought of in 2020, just
+                after the GPT-3 release date. Given access to such a versatile
+                natural language parser, I wanted to apply it to help me in my
+                own schoolwork.
+            </p>
+
+            <p>
+                I created an proof of concept within a couple of days, but it
+                was not until 2021 that I decided to launch it as a full-fledged
+                product. The full product would require more than just a
+                proof-of-concept, including authentication, data handling and
+                storage, design work, UI and UX, and a backend.
+            </p>
+
+            <h2>Backend systems</h2>
+
+            <h3>Web services</h3>
+            <p>
+                Cardz has a severless backend that allows for scaling up or down
+                based on demand extremely quickly. The main backend server is
+                written in Python with the Flask framework.
+            </p>
+
+            <p>
+                There are microservices that run on a schedule that manage
+                sending emails. There are also serverless workers that run
+                extremely quickly for small tasks such as adding cross-origin
+                resource sharing headers to static files.
+            </p>
+
+            <p>
+                All web properties are fronted using Cloudflare CDN, which
+                allows for less load on the server and more bandwidth.
+            </p>
+
+            <h3>Database and authentication</h3>
+
+            <p>
+                Due to the complexity of managing databases as well as user
+                credentials, I elected to use
+                <b>Firebase</b> as a backend platform. This allowed for the
+                abstraction of the database and login system and greatly
+                accelerated the development time.
+            </p>
+
+            <ul>
+                <li>
+                    All application data is stored in Firestore, where it is
+                    queried and updated.
+                </li>
+                <li>
+                    All user authentication and management occurs in Firebase
+                    Authentication. This includes sending password reset emails
+                    and verifying email addresses.
+                </li>
+                <li>
+                    Uploaded files are stored in Firebase Storage (a rebrand of
+                    Google Cloud Storage).
+                </li>
+                <li>The front end is built and served by Firebase Hosting.</li>
+            </ul>
+
+            <p>
+                While a main feature of Firebase is the client-side integration,
+                I elected to move all interaction with Firebase to the back-end,
+                and use a traditional REST API for communication with the
+                front-end.
+            </p>
+
+            <p>
+                This was because Cardz features primarily server-generated
+                content instead of purely user-generated content, so it would be
+                easiest for the server to handle the storage and retrieval of
+                said content.
+            </p>
+
+            <h3>Machine learning pipelines</h3>
+
+            <h4>Flashcard generation</h4>
+            <p>
+                GPT-3 is only available through a REST API, so it is impossible to 
+                specify the conditions of model training and running.
+            </p>
+
+            <p>
+                In the MVP version of Cardz, I used prompt engineering techniques to
+                "train" GPT-3 on every completion request. Since then, OpenAI has
+                released features to pretrain a model. I immedi
+            </p>
+        </div>
+
+        <div class="overlay" id="canvas-overlay" style="z-index: -2">
+            <canvas id="canvas" width="500" height="500"></canvas>
+        </div>
+
+        <div class="overlay" id="cursors-overlay" style="z-index: -1"></div>
+
+        <script src="/main.js"></script>
+    </body>
+</html>

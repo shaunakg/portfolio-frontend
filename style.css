@@ -28,6 +28,14 @@ div.main {
     max-width: 500px;
 }
 
+p.sub {
+    margin-top: -15px; margin-bottom: 30px;
+}
+
+div.nav {
+    font-size: 0.8em;
+}
+
 h1, a, #br-message {
     color: #FF6978;
 }
@@ -107,4 +115,10 @@ span.location {
     span.location {
         display: inline;
     }
+}
+
+img.block {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
 }
